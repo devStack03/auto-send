@@ -85,14 +85,20 @@ async function main() {
 
       console.log('Transaction hash:', receipt.transactionHash);
       console.log('Transfer complete');
+      main();
+
     } else {
       console.log('Token balance is below the threshold.');
+      setTimeout(function () {
+        main();
+      }, 5000);
     }
 
-    main();
   } catch (error) {
     console.error('Error:', error);
-    main();
+    setTimeout(function () {
+      main();
+    }, 5000);
   }
 }
 
