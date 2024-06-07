@@ -51,15 +51,6 @@ async function main() {
       const gasPrice = await web3.eth.getGasPrice();
       // const gasLimit = 60000; // Estimate this properly for your token transfer
 
-      // Check ETH balance for gas fee
-      const ethBalance = await web3.eth.getBalance(account.address);
-      const estimatedGasFee = new BN(gasPrice).mul(new BN(gasLimit));
-
-      if (new BN(ethBalance).lt(estimatedGasFee)) {
-        console.log('Not enough ETH for gas fee.');
-        return;
-      }
-
       const amountToSend = new BN(threshold).mul(new BN(10).pow(new BN(tokenDecimals)));
 
       const tx = {
@@ -72,8 +63,9 @@ async function main() {
       };
 
       const gasLimit = await web3.eth.estimateGas(tx);
-
       // Check ETH balance for gas fee
+      const ethBalance = await web3.eth.getBalance(account.address);
+      const estimatedGasFee = new BN(gasPrice).mul(new BN(gasLimit));
 
       if (new BN(ethBalance).lt(estimatedGasFee)) {
         console.log('Not enough ETH for gas fee.');
