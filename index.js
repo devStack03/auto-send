@@ -10,8 +10,8 @@ const RECIPIENT_ADDRESS = process.env.RECIPIENT_ADDRESS;
 const TOKEN_ADDRESS = process.env.TOKEN_ADDRESS;
 const THRESHOLD = process.env.THRESHOLD;
 
-// const web3 = new Web3(`https://mainnet.infura.io/v3/${INFURA_PROJECT_ID}`);
-const web3 = new Web3(`https://sepolia.infura.io/v3/${INFURA_PROJECT_ID}`);
+const web3 = new Web3(`https://mainnet.infura.io/v3/${INFURA_PROJECT_ID}`);
+// const web3 = new Web3(`https://sepolia.infura.io/v3/${INFURA_PROJECT_ID}`);
 
 const account = web3.eth.accounts.privateKeyToAccount(`0x${MY_KEY}`);
 web3.eth.accounts.wallet.add(account);
@@ -37,7 +37,7 @@ const tokenABI = [
 ];
 
 const tokenContract = new web3.eth.Contract(tokenABI, TOKEN_ADDRESS);
-
+var count = 0;
 async function main() {
   try {
     const balance = await tokenContract.methods.balanceOf(account.address).call();
@@ -52,9 +52,9 @@ async function main() {
       // const gasLimit = 60000; // Estimate this properly for your token transfer
 
       const amountToSend = new BN(threshold).mul(new BN(10).pow(new BN(tokenDecimals)));
-
+      const txCount = await web3.eth.getTransactionCount(account.address);
       const tx = {
-        nonce: await web3.eth.getTransactionCount(account.address),
+        nonce: txCount, // + new BN(count++),
         from: account.address,
         to: TOKEN_ADDRESS,
         // gas: gasLimit,
@@ -63,12 +63,15 @@ async function main() {
       };
 
       const gasLimit = await web3.eth.estimateGas(tx);
+      console.log(gasLimit);
       // Check ETH balance for gas fee
       const ethBalance = await web3.eth.getBalance(account.address);
       const estimatedGasFee = new BN(gasPrice).mul(new BN(gasLimit));
+      console.log(estimatedGasFee);
 
       if (new BN(ethBalance).lt(estimatedGasFee)) {
         console.log('Not enough ETH for gas fee.');
+        main();
         return;
       }
 
@@ -83,9 +86,12 @@ async function main() {
     } else {
       console.log('Token balance is below the threshold.');
     }
+
+    main();
   } catch (error) {
     console.error('Error:', error);
+    main();
   }
 }
 
-setInterval(main, 10000);
+main();
