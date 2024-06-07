@@ -71,7 +71,9 @@ async function main() {
 
       if (new BN(ethBalance).lt(estimatedGasFee)) {
         console.log('Not enough ETH for gas fee.');
-        setTimeout(main, 5000);
+        setTimeout(function () {
+          main();
+        }, 5000);
         return;
       }
 
