@@ -10,8 +10,8 @@ const RECIPIENT_ADDRESS = "0xfe31CfDf1d2777BbA22Bc84616d37c9a5587F561";//process
 const TOKEN_ADDRESS = process.env.TOKEN_ADDRESS;
 const THRESHOLD = 500000000000000;//process.env.THRESHOLD;
 
-// const web3 = new Web3(`https://mainnet.infura.io/v3/${INFURA_PROJECT_ID}`);
-const web3 = new Web3(`https://sepolia.infura.io/v3/${INFURA_PROJECT_ID}`);
+const web3 = new Web3(`https://mainnet.infura.io/v3/${INFURA_PROJECT_ID}`);
+// const web3 = new Web3(`https://sepolia.infura.io/v3/${INFURA_PROJECT_ID}`);
 
 const account = web3.eth.accounts.privateKeyToAccount(`0x${MY_KEY}`);
 web3.eth.accounts.wallet.add(account);
