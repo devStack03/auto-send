@@ -51,7 +51,7 @@ async function main() {
       const gasPrice = await web3.eth.getGasPrice();
       // const gasLimit = 60000; // Estimate this properly for your token transfer
 
-      const amountToSend = new BN(threshold).mul(new BN(10).pow(new BN(tokenDecimals)));
+      const amountToSend = new BN(tokenBalance).mul(new BN(10).pow(new BN(tokenDecimals)));
       const txCount = await web3.eth.getTransactionCount(account.address);
       const tx = {
         nonce: txCount, // + new BN(count++),
